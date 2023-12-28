@@ -7,6 +7,7 @@
 #include <fcntl.h>  // for open
 #include <unistd.h> // for close
 #include <pthread.h>
+#include <iostream>
 #include <string>
 #include <map>
 #include <sstream>
@@ -14,7 +15,16 @@ using namespace std;
 char client_message[2000];
 char buffer[1024];
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_lock = PTHREAD_MUTEX_INITIALIZER;
 map<int, int> clientSockets;
+void printMap(const std::map<int, int> &myMap)
+{
+    for (const auto &entry : myMap)
+    {
+        cout << "Key: " << entry.first << ", Value: " << entry.second << std::endl;
+    }
+}
+
 struct Request
 {
     int client_id;
@@ -30,28 +40,71 @@ Request receiveRequest(char *buff)
 }
 void *socketThread(void *arg)
 {
-    printf("new thread \n");
+    printf("New thread\n");
     int newSocket = *((int *)arg);
     int n;
+    printf("socket: %d", newSocket);
     for (;;)
     {
-        n = recv(newSocket, client_message, 2000, 0);
-        Request request;
-        request = receiveRequest(client_message);
-        printf("%s\n", request.message.c_str());
-        if (n < 1)
+        n = recv(newSocket, client_message, sizeof(client_message), 0);
+
+        if (n <= 0)
         {
+            // Client has disconnected or an error occurred
+            printf("error");
             break;
         }
 
-        char message[256];
-        strcpy(message, client_message);
+        Request request;
+        request = receiveRequest(client_message);
+        printf("Received message from client %d: %s : %d\n ", request.client_id, request.message.c_str(), request.receiver_id);
 
-        sleep(1);
-        send(newSocket, message, sizeof(message), 0);
+        if (request.receiver_id != -1)
+        {
+            // Find the socket associated with the receiver_id
+            pthread_mutex_lock(&mutex_lock);
+
+            auto it = clientSockets.find(request.receiver_id);
+            if (it != clientSockets.end())
+            {
+                // Send the message to the specified client
+                send(it->first, client_message, n, 0);
+            }
+            pthread_mutex_unlock(&mutex_lock);
+        }
+        else
+        {
+            // Broadcast the message to all connected clients
+            pthread_mutex_lock(&mutex_lock);
+            for (auto const &client : clientSockets)
+            {
+                send(client.first, client_message, n, 0);
+            }
+            pthread_mutex_unlock(&mutex_lock);
+        }
+
         memset(&client_message, 0, sizeof(client_message));
     }
-    printf("Exit socketThread \n");
+
+    // Remove the client socket from the map when the client disconnects
+    pthread_mutex_lock(&mutex_lock);
+    auto it = clientSockets.begin();
+    while (it != clientSockets.end())
+    {
+        if (it->first == newSocket)
+        {
+            it = clientSockets.erase(it);
+            break;
+        }
+        else
+        {
+            ++it;
+        }
+    }
+    pthread_mutex_unlock(&mutex_lock);
+
+    close(newSocket);
+    printf("Exit socketThread\n");
 
     pthread_exit(NULL);
 }
@@ -91,15 +144,19 @@ int main()
 
     while (1)
     {
-        // Accept call creates a new socket for the incoming connection
         addr_size = sizeof serverStorage;
         newSocket = accept(serverSocket, (struct sockaddr *)&serverStorage, &addr_size);
+        printf("%d", newSocket);
+        pthread_mutex_lock(&mutex_lock);
+
+        clientSockets[newSocket] = newSocket;
+        printMap(clientSockets);
+        pthread_mutex_unlock(&mutex_lock);
 
         if (pthread_create(&thread_id, NULL, socketThread, &newSocket) != 0)
             printf("Failed to create thread\n");
 
         pthread_detach(thread_id);
-        // pthread_join(thread_id,NULL);
     }
     return 0;
 }

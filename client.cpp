@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 
     for (;;)
     {
-
+        printf("Please enter a message: ");
         msg_scanf_size = scanf("%s", message);
         if (scanf("%d", &request.receiver_id) != 1)
         {
