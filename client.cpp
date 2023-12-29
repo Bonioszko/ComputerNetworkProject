@@ -56,19 +56,24 @@ int main(int argc, char *argv[])
     addr_size = sizeof serverAddr;
     connect(clientSocket, (struct sockaddr *)&serverAddr, addr_size);
     // strcpy(message,"Hello");
-    int msg_scanf_size;
-    // strcpy(message, makeRequest(request).c_str());
-    // if (send(clientSocket, message, strlen(message), 0) < 0)
-    // {
-    //     printf("Send failed\n");
-    // }
-    // if (recv(clientSocket, buffer, 1024, 0) < 0)
-    // {
-    //     printf("Receive failed\n");
-    // }
-    // printf("Data received: %s\n", buffer);
 
-    // memset(&message, 0, sizeof(message));
+    int msg_scanf_size;
+    request.message = "registering";
+    request.receiver_id = request.client_id;
+
+    strcpy(message, makeRequest(request).c_str());
+    if (send(clientSocket, message, strlen(message), 0) < 0)
+    {
+        printf("Send failed\n");
+    }
+    if (recv(clientSocket, buffer, 1024, 0) < 0)
+    {
+        printf("Receive failed\n");
+    }
+    printf("Data received: %s\n", buffer);
+
+    memset(&message, 0, sizeof(message));
+    memset(&buffer, 0, sizeof(buffer));
     for (;;)
     {
         printf("Please enter a message: \n");
@@ -103,6 +108,7 @@ int main(int argc, char *argv[])
         printf("Data received: %s\n", buffer);
 
         memset(&message, 0, sizeof(message));
+        memset(&buffer, 0, sizeof(buffer));
     }
 
     close(clientSocket);
