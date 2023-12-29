@@ -17,6 +17,7 @@ char buffer[1024];
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_lock = PTHREAD_MUTEX_INITIALIZER;
 map<int, int> clientSockets;
+map<int, bool> activeClients;
 void printMap(const std::map<int, int> &myMap)
 {
     for (const auto &entry : myMap)
@@ -38,12 +39,46 @@ Request receiveRequest(char *buff)
     iss >> request.client_id >> request.message >> request.receiver_id;
     return request;
 }
+void deleteClient(map<int, int> &myMap, const int &client)
+{
+    auto it = myMap.find(client);
+    if (it != myMap.end())
+    {
+        myMap.erase(it);
+        printf("client deleted");
+    }
+    else
+    {
+        printf("no client with that id");
+    }
+}
+void makeClientInactive(map<int, bool> &myMap, const int &client, bool deletion)
+{
+    if (deletion)
+    {
+        auto it = myMap.find(client);
+        if (it != myMap.end())
+        {
+            myMap.erase(it);
+            printf("client deleted");
+        }
+        else
+        {
+            printf("no client with that id");
+        }
+    }
+    else
+    {
+        /* code */
+    }
+}
 void *socketThread(void *arg)
 {
     printf("New thread\n");
     int newSocket = *((int *)arg);
     int n;
     printf("socket: %d", newSocket);
+
     for (;;)
     {
         n = recv(newSocket, client_message, sizeof(client_message), 0);
@@ -58,18 +93,39 @@ void *socketThread(void *arg)
         Request request;
         request = receiveRequest(client_message);
         printf("Received message from client %d: %s : %d\n ", request.client_id, request.message.c_str(), request.receiver_id);
-
+        clientSockets[request.client_id] = newSocket;
+        activeClients[request.client_id] = true;
+        printMap(clientSockets);
         if (request.receiver_id != -1)
         {
             // Find the socket associated with the receiver_id
             pthread_mutex_lock(&mutex_lock);
-
-            auto it = clientSockets.find(request.receiver_id);
-            if (it != clientSockets.end())
+            bool sent = false;
+            for (const auto &entry : clientSockets)
             {
-                // Send the message to the specified client
-                send(it->first, client_message, n, 0);
+                if (entry.first == request.receiver_id)
+                {
+                    sent = true;
+                    // Send the message to the specified client
+                    if (send(entry.second, client_message, n, 0))
+                    {
+                        printf("wyslano");
+                    }
+                    else
+                    {
+                        printf("blad");
+                    };
+                    break; // Assuming receiver_id is unique, exit loop after finding the first match
+                }
             }
+            if (!sent)
+            {
+                printf("provide different id");
+                string error_message = "provide different id";
+                int size = sizeof(error_message);
+                send(clientSockets[request.client_id], error_message.c_str(), size, 0);
+            }
+
             pthread_mutex_unlock(&mutex_lock);
         }
         else
@@ -78,7 +134,7 @@ void *socketThread(void *arg)
             pthread_mutex_lock(&mutex_lock);
             for (auto const &client : clientSockets)
             {
-                send(client.first, client_message, n, 0);
+                send(client.second, client_message, n, 0);
             }
             pthread_mutex_unlock(&mutex_lock);
         }
@@ -88,20 +144,22 @@ void *socketThread(void *arg)
 
     // Remove the client socket from the map when the client disconnects
     pthread_mutex_lock(&mutex_lock);
-    auto it = clientSockets.begin();
-    while (it != clientSockets.end())
-    {
-        if (it->first == newSocket)
-        {
-            it = clientSockets.erase(it);
-            break;
-        }
-        else
-        {
-            ++it;
-        }
-    }
-    pthread_mutex_unlock(&mutex_lock);
+    // auto it = clientSockets.begin();
+    // while (it != clientSockets.end())
+    // {
+    //     printf("%d", newSocket);
+    //     if (it->second == newSocket)
+    //     {
+    //         it = clientSockets.erase(it);
+    //         break;
+    //     }
+    //     else
+    //     {
+    //         ++it;
+    //     }
+    // }
+    auto it =
+        pthread_mutex_unlock(&mutex_lock);
 
     close(newSocket);
     printf("Exit socketThread\n");
@@ -147,11 +205,9 @@ int main()
         addr_size = sizeof serverStorage;
         newSocket = accept(serverSocket, (struct sockaddr *)&serverStorage, &addr_size);
         printf("%d", newSocket);
-        pthread_mutex_lock(&mutex_lock);
+        // pthread_mutex_lock(&mutex_lock);
 
-        clientSockets[newSocket] = newSocket;
-        printMap(clientSockets);
-        pthread_mutex_unlock(&mutex_lock);
+        // pthread_mutex_unlock(&mutex_lock);
 
         if (pthread_create(&thread_id, NULL, socketThread, &newSocket) != 0)
             printf("Failed to create thread\n");

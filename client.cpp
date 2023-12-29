@@ -23,7 +23,7 @@ string makeRequest(Request request)
 }
 int main(int argc, char *argv[])
 {
-
+    printf("1\n");
     char message[1000];
     char buffer[1024];
     int clientSocket;
@@ -35,6 +35,11 @@ int main(int argc, char *argv[])
 
     // Create the socket.
     clientSocket = socket(PF_INET, SOCK_STREAM, 0);
+    if (clientSocket == -1)
+    {
+        perror("socket");
+        return 1;
+    }
 
     // Configure settings of the server address
     // Address family is Internet
@@ -52,10 +57,21 @@ int main(int argc, char *argv[])
     connect(clientSocket, (struct sockaddr *)&serverAddr, addr_size);
     // strcpy(message,"Hello");
     int msg_scanf_size;
+    // strcpy(message, makeRequest(request).c_str());
+    // if (send(clientSocket, message, strlen(message), 0) < 0)
+    // {
+    //     printf("Send failed\n");
+    // }
+    // if (recv(clientSocket, buffer, 1024, 0) < 0)
+    // {
+    //     printf("Receive failed\n");
+    // }
+    // printf("Data received: %s\n", buffer);
 
+    // memset(&message, 0, sizeof(message));
     for (;;)
     {
-        printf("Please enter a message: ");
+        printf("Please enter a message: \n");
         msg_scanf_size = scanf("%s", message);
         if (scanf("%d", &request.receiver_id) != 1)
         {
@@ -72,12 +88,12 @@ int main(int argc, char *argv[])
         }
         request.message = message;
         strcpy(message, makeRequest(request).c_str());
-        printf("%s\n", message);
+        printf("%d\n", clientSocket);
         if (send(clientSocket, message, strlen(message), 0) < 0)
         {
             printf("Send failed\n");
         }
-
+        printf("Waiting");
         // Read the message from the server into the buffer
         if (recv(clientSocket, buffer, 1024, 0) < 0)
         {
