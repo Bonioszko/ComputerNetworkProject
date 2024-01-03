@@ -33,9 +33,10 @@ void *serverThread(void *arg)
     for (;;)
     {
         // Wait for server response
-        if (recv(clientSocket, buffer, 1024, 0) < 0)
+        if (recv(clientSocket, buffer, 1024, 0) <=0)
         {
             printf("Receive failed\n");
+            break;
         }
 
         // Print the received message
@@ -85,7 +86,7 @@ int main(int argc, char *argv[])
     // strcpy(message,"Hello");
 
     int msg_scanf_size;
-    request.message = "registering";
+    request.message = "REGISTER";
     request.receiver_id = request.client_id;
    
     strcpy(message, makeRequest(request).c_str());

@@ -75,6 +75,7 @@ void deleteClient(map<int, int> &myMap, const int &client)
     }
 }
 void makeClientInactive(map<int, bool> &myMap, const int &client, bool deletion)
+
 {
     if (deletion)
     {
@@ -93,6 +94,16 @@ void makeClientInactive(map<int, bool> &myMap, const int &client, bool deletion)
     {
         /* code */
     }
+}
+string showAllClients(map<int, bool> &activeClients){
+    stringstream keysStream;
+    keysStream << "List of clients:\n";
+    for (const auto& pair : activeClients) {
+            keysStream << "Client: " << pair.first << ", ";
+        }
+
+    // Convert the stringstream to a string and return
+    return keysStream.str();
 }
 void *socketThread(void *arg)
 {
@@ -127,60 +138,83 @@ void *socketThread(void *arg)
         {
             printf("ma permission\n");
         }
+        if (request.message == "REGISTER")
+        {   
+            if (send(clientSockets[request.client_id],request.message.c_str(),request.message.length(),0)<0)
+            {
+                printf("blad");
+            }
+            
+        }
         
-        printMap(clientSockets);
-        if (hasPermission(permisssions,client_id,receiver_id))
+        if (request.message =="SHOW_CLIENTS")
         {
-            if (request.receiver_id != -1)
-        {
-            // Find the socket associated with the receiver_id
             pthread_mutex_lock(&mutex_lock);
-            bool sent = false;
-            for (const auto &entry : clientSockets)
-            {
-                if (entry.first == request.receiver_id)
-                {
-                    sent = true;
-                    // Send the message to the specified client
-                    if (send(entry.second, client_message, n, 0))
-                    {
-                        printf("wyslano");
-                    }
-                    else
-                    {
-                        printf("blad");
-                    };
-                    break; // Assuming receiver_id is unique, exit loop after finding the first match
-                }
-            }
-            if (!sent)
-            {
-                printf("provide different id");
-                string error_message = "provide different id";
-                int size = sizeof(error_message);
-                send(clientSockets[request.client_id], error_message.c_str(), size, 0);
-            }
 
+           strcpy(client_message, showAllClients(activeClients).c_str());
+            if (send(clientSockets[request.client_id],client_message,strlen(client_message),0)<0)
+            {
+                printf("send failed");
+            }
             pthread_mutex_unlock(&mutex_lock);
         }
-        // else
+        
+        
+        printMap(clientSockets);
+
+        //to na dole odkomentowac jakby gora nie dzialala
+        // if (hasPermission(permisssions,client_id,receiver_id))
         // {
-        //     // Broadcast the message to all connected clients
+        //     if (request.receiver_id != -1)
+        // {
+        //     // Find the socket associated with the receiver_id
         //     pthread_mutex_lock(&mutex_lock);
-        //     for (auto const &client : clientSockets)
+        //     bool sent = false;
+        //     for (const auto &entry : clientSockets)
         //     {
-        //         send(client.second, client_message, n, 0);
+        //         if (entry.first == request.receiver_id)
+        //         {
+        //             sent = true;
+        //             // Send the message to the specified client
+        //             if (send(entry.second, client_message, n, 0))
+        //             {
+        //                 printf("wyslano");
+        //             }
+        //             else
+        //             {
+        //                 printf("blad");
+        //             };
+        //             break; // Assuming receiver_id is unique, exit loop after finding the first match
+        //         }
         //     }
+        //     if (!sent)
+        //     {
+        //         printf("provide different id");
+        //         string error_message = "provide different id";
+        //         int size = sizeof(error_message);
+        //         send(clientSockets[request.client_id], error_message.c_str(), size, 0);
+        //     }
+
         //     pthread_mutex_unlock(&mutex_lock);
         // }
+        // // else
+        // // {
+        // //     // Broadcast the message to all connected clients
+        // //     pthread_mutex_lock(&mutex_lock);
+        // //     for (auto const &client : clientSockets)
+        // //     {
+        // //         send(client.second, client_message, n, 0);
+        // //     }
+        // //     pthread_mutex_unlock(&mutex_lock);
+        // // }
 
-        }
-        else
-        {
-            string error_message = "provide different id";
-                int size = sizeof(error_message);
-                send(clientSockets[request.client_id], error_message.c_str(), size, 0);
-        }
+        // }
+        // else
+        // {
+        //     string error_message = "provide different id";
+        //         int size = sizeof(error_message);
+        //         send(clientSockets[request.client_id], error_message.c_str(), size, 0);
+        // }
         
         
         memset(&client_message, 0, sizeof(client_message));
