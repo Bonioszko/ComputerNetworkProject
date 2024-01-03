@@ -10,6 +10,7 @@
 #include <string>
 #include <map>
 #include <sstream>
+#include <iostream>
 using namespace std;
 struct Request
 {
@@ -25,11 +26,12 @@ string makeRequest(Request request)
 }
 int main(int argc, char *argv[])
 {
-    printf("1\n");
+
     char message[1000];
     char buffer[1024];
     int clientSocket;
     int clientId = stoi(argv[1]);
+    string action;
     Request request;
     request.client_id = clientId;
     struct sockaddr_in serverAddr;
@@ -49,11 +51,11 @@ int main(int argc, char *argv[])
 
     // Set port number, using htons function
     serverAddr.sin_port = htons(1100);
-    printf("1\n");
+
     // Set IP address
     serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
     memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);
-    printf("1\n");
+    
     // Connect the socket to the server using the address
     addr_size = sizeof serverAddr;
     connect(clientSocket, (struct sockaddr *)&serverAddr, addr_size);
@@ -62,13 +64,13 @@ int main(int argc, char *argv[])
     int msg_scanf_size;
     request.message = "registering";
     request.receiver_id = request.client_id;
-    printf("1\n");
+   
     strcpy(message, makeRequest(request).c_str());
     if (send(clientSocket, message, strlen(message), 0) < 0)
     {
         printf("Send failed\n");
     }
-    printf("1\n");
+    
     if (recv(clientSocket, buffer, 1024, 0) < 0)
     {
         printf("Receive failed\n");
@@ -79,14 +81,26 @@ int main(int argc, char *argv[])
     memset(&buffer, 0, sizeof(buffer));
     for (;;)
     {
-        printf("Please enter a message: \n");
-        msg_scanf_size = scanf("%s", message);
+        cout << "please enter action to do:\n "<<
+        "1.exit 2.show admins 3. show clients \n "<<
+        "4.shutdown 5.add admins\n";
+        // printf("please enter action to do: \n 1. exit, 2\n");
+        cin >> action;
+        // msg_scanf_size = scanf("%s", message);
+        if (action =="1")
+        {
+            break;
+        }
+        else if(action =="2"){
+           strcpy(message,"SHOW_ADMINS");
+        }
+        
+        
         if (scanf("%d", &request.receiver_id) != 1)
         {
             printf("Invalid input. Please enter an integer.\n");
             return 1;
         }
-
         char *s;
         s = strstr(message, "exit");
         if (s != NULL)
@@ -102,7 +116,7 @@ int main(int argc, char *argv[])
             printf("Send failed\n");
         }
         printf("Waiting");
-        // Read the message from the server into the buffer
+    
         if (recv(clientSocket, buffer, 1024, 0) < 0)
         {
             printf("Receive failed\n");

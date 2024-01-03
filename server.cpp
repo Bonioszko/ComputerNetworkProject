@@ -122,6 +122,7 @@ void *socketThread(void *arg)
         receiver_id = request.receiver_id;
         //na razei na wsztywno sprawdzm
         addPermission(permisssions,client_id,client_id);
+        addPermission(permisssions,client_id,5);
         if (hasPermission(permisssions,client_id,client_id))
         {
             printf("ma permission\n");
@@ -130,10 +131,7 @@ void *socketThread(void *arg)
         printMap(clientSockets);
         if (hasPermission(permisssions,client_id,receiver_id))
         {
-            printf("ma dostep");
-        }
-        
-        if (request.receiver_id != -1)
+            if (request.receiver_id != -1)
         {
             // Find the socket associated with the receiver_id
             pthread_mutex_lock(&mutex_lock);
@@ -176,6 +174,15 @@ void *socketThread(void *arg)
         //     pthread_mutex_unlock(&mutex_lock);
         // }
 
+        }
+        else
+        {
+            string error_message = "provide different id";
+                int size = sizeof(error_message);
+                send(clientSockets[request.client_id], error_message.c_str(), size, 0);
+        }
+        
+        
         memset(&client_message, 0, sizeof(client_message));
     }
 
