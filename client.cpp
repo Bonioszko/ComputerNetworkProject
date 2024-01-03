@@ -17,11 +17,12 @@ struct Request
     int client_id;
     string message;
     int receiver_id;
+    int receiver_id_permission;
 };
 string makeRequest(Request request)
 {
     char message[2000];
-    strcpy(message, (to_string(request.client_id) + " " + request.message.c_str() + " " + to_string(request.receiver_id)).c_str());
+    strcpy(message, (to_string(request.client_id) + " " + request.message.c_str() + " " + to_string(request.receiver_id)+ " " + to_string(request.receiver_id_permission)).c_str());
     return message;
 }
 
@@ -115,7 +116,7 @@ int main(int argc, char *argv[])
     {
         cout << "please enter action to do:\n "<<
         "1.exit 2.show admins 3. show clients \n "<<
-        "4.shutdown 5.add admins\n";
+        "4.shutdown 5.add permission\n";
         // printf("please enter action to do: \n 1. exit, 2\n");
         cin >> action;
         // msg_scanf_size = scanf("%s", message);
@@ -164,8 +165,13 @@ int main(int argc, char *argv[])
         }
          else if(action =="5"){
 
-            strcpy(message,"ADD_ADMIN");
+            strcpy(message,"ADD_PERMISSION");
              if (scanf("%d", &request.receiver_id) != 1)
+            {
+                printf("Invalid input. Please enter an integer.\n");
+                return 1;
+            }
+            if (scanf("%d", &request.receiver_id_permission) != 1)
             {
                 printf("Invalid input. Please enter an integer.\n");
                 return 1;

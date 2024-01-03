@@ -11,6 +11,7 @@
 #include <string>
 #include <map>
 #include <sstream>
+#include <algorithm>
 using namespace std;
 char client_message[2000];
 char buffer[1024];
@@ -21,7 +22,16 @@ map<int, bool> activeClients;
 map<int, vector<int> > permisssions;
 void addPermission(map<int, vector<int> > &clientPermissions, int client, int permission_to)
 {
-    clientPermissions[client].push_back(permission_to);
+     if (clientPermissions.find(client) != clientPermissions.end()) {
+        // Check if the permission is not already in the vector for the client
+        if (find(clientPermissions[client].begin(), clientPermissions[client].end(), permission_to) == clientPermissions[client].end()) {
+            // Permission is not in the vector, so add it
+            clientPermissions[client].push_back(permission_to);
+        } 
+    } else {
+        // Client does not exist, create a new entry in the map
+        clientPermissions[client].push_back(permission_to);
+    }
 }
 bool hasPermission(const std::map<int, std::vector<int> > &clientPermissions, int client, int permission_to)
 {
@@ -53,12 +63,13 @@ struct Request
     int client_id;
     string message;
     int receiver_id;
+    int receiver_id_permission;
 };
 Request receiveRequest(char *buff)
 {
     istringstream iss(buff);
     Request request;
-    iss >> request.client_id >> request.message >> request.receiver_id;
+    iss >> request.client_id >> request.message >> request.receiver_id >> request.receiver_id_permission;
     return request;
 }
 void deleteClient(map<int, int> &myMap, const int &client)
@@ -101,9 +112,19 @@ string showAllClients(map<int, bool> &activeClients){
     for (const auto& pair : activeClients) {
             keysStream << "Client: " << pair.first << ", ";
         }
-
-    // Convert the stringstream to a string and return
     return keysStream.str();
+}
+string showPermission(map<int, vector<int> > &clientPermissions, int client){
+    stringstream permissionStream;
+    vector <int> permissions = clientPermissions[client];
+    int size = permissions.size();
+    permissionStream <<"Available to shutdown for client: "<<client << ":[ ";
+    for (int i = 0; i < size; i++)
+    {
+        permissionStream<< permissions[i]<< ", ";
+    }
+    permissionStream <<"]";
+    return permissionStream.str();
 }
 void *socketThread(void *arg)
 {
@@ -132,14 +153,15 @@ void *socketThread(void *arg)
         activeClients[client_id] = true;
         receiver_id = request.receiver_id;
         //na razei na wsztywno sprawdzm
-        addPermission(permisssions,client_id,client_id);
-        addPermission(permisssions,client_id,5);
+        
+     
         if (hasPermission(permisssions,client_id,client_id))
         {
             printf("ma permission\n");
         }
         if (request.message == "REGISTER")
         {   
+            addPermission(permisssions,client_id,client_id);
             if (send(clientSockets[request.client_id],request.message.c_str(),request.message.length(),0)<0)
             {
                 printf("blad");
@@ -147,7 +169,7 @@ void *socketThread(void *arg)
             
         }
         
-        if (request.message =="SHOW_CLIENTS")
+        else if (request.message =="SHOW_CLIENTS")
         {
             pthread_mutex_lock(&mutex_lock);
 
@@ -156,6 +178,19 @@ void *socketThread(void *arg)
             {
                 printf("send failed");
             }
+            pthread_mutex_unlock(&mutex_lock);
+        }
+        else if (request.message == "ADD_PERMISSION")
+        { 
+            //tutaj dodac sprawdzenie czy jest adminem
+              pthread_mutex_lock(&mutex_lock);
+            addPermission(permisssions,request.receiver_id,request.receiver_id_permission);
+            string message = showPermission(permisssions,request.receiver_id);
+            if (send(clientSockets[request.client_id],message.c_str(),message.length(),0)<0)
+            {
+                printf("blad");
+            }
+            
             pthread_mutex_unlock(&mutex_lock);
         }
         
