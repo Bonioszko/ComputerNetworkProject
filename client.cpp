@@ -92,30 +92,78 @@ int main(int argc, char *argv[])
             break;
         }
         else if(action =="2"){
-           strcpy(message,"SHOW_ADMINS");
+            strcpy(message,"SHOW_ADMINS");
+            request.receiver_id = request.client_id;
+            request.message = message;
+            strcpy(message, makeRequest(request).c_str());
+            printf("%d\n", clientSocket);
+            if (send(clientSocket, message, strlen(message), 0) < 0)
+                {
+                    printf("Send failed\n");
+                }
+        }  
+        else if(action =="3"){
+            strcpy(message,"SHOW_CLIENTS");
+            request.receiver_id = request.client_id;
+            request.message = message;
+            strcpy(message, makeRequest(request).c_str());
+            printf("%d\n", clientSocket);
+            if (send(clientSocket, message, strlen(message), 0) < 0)
+                {
+                    printf("Send failed\n");
+                }
         }
-        
-        
-        if (scanf("%d", &request.receiver_id) != 1)
-        {
-            printf("Invalid input. Please enter an integer.\n");
+        else if(action =="4"){
+
+            strcpy(message,"SHUTDOWN");
+             if (scanf("%d", &request.receiver_id) != 1)
+            {
+                printf("Invalid input. Please enter an integer.\n");
+                return 1;
+            }
+          
+            request.message = message;
+            strcpy(message, makeRequest(request).c_str());
+            printf("%d\n", clientSocket);
+            if (send(clientSocket, message, strlen(message), 0) < 0)
+                {
+                    printf("Send failed\n");
+                }
+        }
+         else if(action =="5"){
+
+            strcpy(message,"ADD_ADMIN");
+             if (scanf("%d", &request.receiver_id) != 1)
+            {
+                printf("Invalid input. Please enter an integer.\n");
+                return 1;
+            }
+          
+            request.message = message;
+            strcpy(message, makeRequest(request).c_str());
+            printf("%d\n", clientSocket);
+            if (send(clientSocket, message, strlen(message), 0) < 0)
+                {
+                    printf("Send failed\n");
+                }
+        }
+        else{
+            cout << "choose valid action\n";
             return 1;
         }
-        char *s;
-        s = strstr(message, "exit");
-        if (s != NULL)
-        {
-            printf("Exiting\n");
-            break;
-        }
-        request.message = message;
-        strcpy(message, makeRequest(request).c_str());
-        printf("%d\n", clientSocket);
-        if (send(clientSocket, message, strlen(message), 0) < 0)
-        {
-            printf("Send failed\n");
-        }
-        printf("Waiting");
+
+    
+        
+       
+        // char *s;
+        // s = strstr(message, "exit");
+        // if (s != NULL)
+        // {
+        //     printf("Exiting\n");
+        //     break;
+        // }
+        
+        printf("Waiting\n");
     
         if (recv(clientSocket, buffer, 1024, 0) < 0)
         {
