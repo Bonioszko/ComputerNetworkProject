@@ -119,13 +119,20 @@ void *socketThread(void *arg)
         client_id = request.client_id;
         clientSockets[client_id] = newSocket;
         activeClients[client_id] = true;
-        addPermission(permisssions,client_id,5);
-        if (hasPermission(permisssions,client_id,5))
+        receiver_id = request.receiver_id;
+        //na razei na wsztywno sprawdzm
+        addPermission(permisssions,client_id,client_id);
+        if (hasPermission(permisssions,client_id,client_id))
         {
             printf("ma permission\n");
         }
         
         printMap(clientSockets);
+        if (hasPermission(permisssions,client_id,receiver_id))
+        {
+            printf("ma dostep");
+        }
+        
         if (request.receiver_id != -1)
         {
             // Find the socket associated with the receiver_id
@@ -158,16 +165,16 @@ void *socketThread(void *arg)
 
             pthread_mutex_unlock(&mutex_lock);
         }
-        else
-        {
-            // Broadcast the message to all connected clients
-            pthread_mutex_lock(&mutex_lock);
-            for (auto const &client : clientSockets)
-            {
-                send(client.second, client_message, n, 0);
-            }
-            pthread_mutex_unlock(&mutex_lock);
-        }
+        // else
+        // {
+        //     // Broadcast the message to all connected clients
+        //     pthread_mutex_lock(&mutex_lock);
+        //     for (auto const &client : clientSockets)
+        //     {
+        //         send(client.second, client_message, n, 0);
+        //     }
+        //     pthread_mutex_unlock(&mutex_lock);
+        // }
 
         memset(&client_message, 0, sizeof(client_message));
     }
