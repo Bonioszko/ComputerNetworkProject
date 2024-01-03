@@ -18,6 +18,28 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_lock = PTHREAD_MUTEX_INITIALIZER;
 map<int, int> clientSockets;
 map<int, bool> activeClients;
+map<int, vector<int> > permisssions;
+void addPermission(map<int, vector<int> > &clientPermissions, int client, int permission_to)
+{
+    clientPermissions[client].push_back(permission_to);
+}
+bool hasPermission(const std::map<int, std::vector<int> > &clientPermissions, int client, int permission_to)
+{
+    // Check if the client exists in the map
+    auto clientIterator = clientPermissions.find(client);
+    if (clientIterator != clientPermissions.end()) {
+        // Check if the permission_to value is in the vector associated with the client
+        const std::vector<int> &permissions = clientIterator->second;
+        for (int permission : permissions) {
+            if (permission == permission_to) {
+                return true;  // Client has the specified permission
+            }
+        }
+    }
+
+    return false;  // Client does not have the specified permission
+}
+
 void printMap(const std::map<int, int> &myMap)
 {
     for (const auto &entry : myMap)
@@ -79,6 +101,7 @@ void *socketThread(void *arg)
     int n;
     printf("socket: %d", newSocket);
     int client_id;
+    int receiver_id;
     for (;;)
     {
         n = recv(newSocket, client_message, sizeof(client_message), 0);
@@ -96,6 +119,12 @@ void *socketThread(void *arg)
         client_id = request.client_id;
         clientSockets[client_id] = newSocket;
         activeClients[client_id] = true;
+        addPermission(permisssions,client_id,5);
+        if (hasPermission(permisssions,client_id,5))
+        {
+            printf("ma permission\n");
+        }
+        
         printMap(clientSockets);
         if (request.receiver_id != -1)
         {

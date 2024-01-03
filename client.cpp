@@ -8,6 +8,8 @@
 #include <unistd.h> // for close
 #include <pthread.h>
 #include <string>
+#include <map>
+#include <sstream>
 using namespace std;
 struct Request
 {
