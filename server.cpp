@@ -78,7 +78,7 @@ void *socketThread(void *arg)
     int newSocket = *((int *)arg);
     int n;
     printf("socket: %d", newSocket);
-
+    int client_id;
     for (;;)
     {
         n = recv(newSocket, client_message, sizeof(client_message), 0);
@@ -93,8 +93,9 @@ void *socketThread(void *arg)
         Request request;
         request = receiveRequest(client_message);
         printf("Received message from client %d: %s : %d\n ", request.client_id, request.message.c_str(), request.receiver_id);
-        clientSockets[request.client_id] = newSocket;
-        activeClients[request.client_id] = true;
+        client_id = request.client_id;
+        clientSockets[client_id] = newSocket;
+        activeClients[client_id] = true;
         printMap(clientSockets);
         if (request.receiver_id != -1)
         {
@@ -144,6 +145,9 @@ void *socketThread(void *arg)
 
     // Remove the client socket from the map when the client disconnects
     pthread_mutex_lock(&mutex_lock);
+    deleteClient(clientSockets, client_id);
+    makeClientInactive(activeClients, client_id, true);
+
     // auto it = clientSockets.begin();
     // while (it != clientSockets.end())
     // {
@@ -158,8 +162,7 @@ void *socketThread(void *arg)
     //         ++it;
     //     }
     // }
-    auto it =
-        pthread_mutex_unlock(&mutex_lock);
+    pthread_mutex_unlock(&mutex_lock);
 
     close(newSocket);
     printf("Exit socketThread\n");

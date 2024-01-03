@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     clientSocket = socket(PF_INET, SOCK_STREAM, 0);
     if (clientSocket == -1)
     {
-        perror("socket");
+        printf("socket");
         return 1;
     }
 
@@ -47,11 +47,11 @@ int main(int argc, char *argv[])
 
     // Set port number, using htons function
     serverAddr.sin_port = htons(1100);
-
+    printf("1\n");
     // Set IP address
     serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
     memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);
-
+    printf("1\n");
     // Connect the socket to the server using the address
     addr_size = sizeof serverAddr;
     connect(clientSocket, (struct sockaddr *)&serverAddr, addr_size);
@@ -60,12 +60,13 @@ int main(int argc, char *argv[])
     int msg_scanf_size;
     request.message = "registering";
     request.receiver_id = request.client_id;
-
+    printf("1\n");
     strcpy(message, makeRequest(request).c_str());
     if (send(clientSocket, message, strlen(message), 0) < 0)
     {
         printf("Send failed\n");
     }
+    printf("1\n");
     if (recv(clientSocket, buffer, 1024, 0) < 0)
     {
         printf("Receive failed\n");
