@@ -24,6 +24,28 @@ string makeRequest(Request request)
     strcpy(message, (to_string(request.client_id) + " " + request.message.c_str() + " " + to_string(request.receiver_id)).c_str());
     return message;
 }
+
+void *serverThread(void *arg)
+{
+    char buffer[1024];
+    int clientSocket = *((int *)arg);
+
+    for (;;)
+    {
+        // Wait for server response
+        if (recv(clientSocket, buffer, 1024, 0) < 0)
+        {
+            printf("Receive failed\n");
+        }
+
+        // Print the received message
+        printf("Data received: %s\n", buffer);
+        memset(&buffer, 0, sizeof(buffer));
+
+    }
+   
+    pthread_exit(NULL);
+}
 int main(int argc, char *argv[])
 {
 
@@ -36,6 +58,7 @@ int main(int argc, char *argv[])
     request.client_id = clientId;
     struct sockaddr_in serverAddr;
     socklen_t addr_size;
+    pthread_t serverThreadId;
 
     // Create the socket.
     clientSocket = socket(PF_INET, SOCK_STREAM, 0);
@@ -79,6 +102,14 @@ int main(int argc, char *argv[])
 
     memset(&message, 0, sizeof(message));
     memset(&buffer, 0, sizeof(buffer));
+  
+    if (pthread_create(&serverThreadId, NULL, serverThread, (void *)&clientSocket) != 0)
+    {
+        perror("pthread_create");
+        close(clientSocket);
+        return 1;
+        
+    }
     for (;;)
     {
         cout << "please enter action to do:\n "<<
@@ -162,18 +193,20 @@ int main(int argc, char *argv[])
         //     printf("Exiting\n");
         //     break;
         // }
-        
-        printf("Waiting\n");
-    
-        if (recv(clientSocket, buffer, 1024, 0) < 0)
-        {
-            printf("Receive failed\n");
-        }
-        // Print the received message
-        printf("Data received: %s\n", buffer);
+        //
+        // ponizej do dokomentowania jakby thread nie dzialal
 
-        memset(&message, 0, sizeof(message));
-        memset(&buffer, 0, sizeof(buffer));
+        // printf("Waiting\n");
+    
+        // if (recv(clientSocket, buffer, 1024, 0) < 0)
+        // {
+        //     printf("Receive failed\n");
+        // }
+        // // Print the received message
+        // printf("Data received: %s\n", buffer);
+
+        // memset(&message, 0, sizeof(message));
+        // memset(&buffer, 0, sizeof(buffer));
     }
 
     close(clientSocket);
