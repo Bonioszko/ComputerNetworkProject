@@ -36,12 +36,12 @@ void *serverThread(void *arg)
         // Wait for server response
         if (recv(clientSocket, buffer, 1024, 0) <=0)
         {
-            printf("Receive failed\n");
+            cout << "Receive failed";
             break;
         }
-
+        
         // Print the received message
-        printf("Data received: %s\n", buffer);
+        cout<< "Data received: " << buffer;
         memset(&buffer, 0, sizeof(buffer));
 
     }
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
     clientSocket = socket(PF_INET, SOCK_STREAM, 0);
     if (clientSocket == -1)
     {
-        printf("socket");
+       
         return 1;
     }
 
@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
     addr_size = sizeof serverAddr;
     connect(clientSocket, (struct sockaddr *)&serverAddr, addr_size);
     // strcpy(message,"Hello");
-
+memset(&message, 0, sizeof(message));
     int msg_scanf_size;
     request.message = "REGISTER";
     request.receiver_id = request.client_id;
@@ -93,14 +93,14 @@ int main(int argc, char *argv[])
     strcpy(message, makeRequest(request).c_str());
     if (send(clientSocket, message, strlen(message), 0) < 0)
     {
-        printf("Send failed\n");
+        perror("Send failed: ");
     }
-    
-    if (recv(clientSocket, buffer, 1024, 0) < 0)
+    memset(&message, 0, sizeof(message));
+    if (recv(clientSocket, message, strlen(message), 0) < 0)
     {
-        printf("Receive failed\n");
+        perror("Receive failed");
     }
-    printf("Data received: %s\n", buffer);
+    cout << "Data received: %s\n"<< message << "koniec";
 
     memset(&message, 0, sizeof(message));
     memset(&buffer, 0, sizeof(buffer));
@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
     for (;;)
     {
         cout << "please enter action to do:\n "<<
-        "1.exit 2.show admins 3. show clients \n "<<
+        "1.exit 3. show clients \n "<<
         "4.shutdown 5.add permission\n";
         // printf("please enter action to do: \n 1. exit, 2\n");
         cin >> action;
@@ -124,31 +124,33 @@ int main(int argc, char *argv[])
         {
             break;
         }
-        else if(action =="2"){
-            strcpy(message,"SHOW_ADMINS");
-            request.receiver_id = request.client_id;
-            request.message = message;
-            strcpy(message, makeRequest(request).c_str());
-            printf("%d\n", clientSocket);
-            if (send(clientSocket, message, strlen(message), 0) < 0)
-                {
-                    printf("Send failed\n");
-                }
-        }  
+        // else if(action =="2"){
+        //     strcpy(message,"SHOW_ADMINS");
+        //     request.receiver_id = request.client_id;
+        //     request.message = message;
+        //     strcpy(message, makeRequest(request).c_str());
+           
+        //     if (send(clientSocket, message, strlen(message), 0) < 0)
+        //         {
+        //             perror("Send failed: ");
+        //         }
+        // }  
+        //need to implement admins there 
         else if(action =="3"){
             strcpy(message,"SHOW_CLIENTS");
             request.receiver_id = request.client_id;
             request.message = message;
             strcpy(message, makeRequest(request).c_str());
-            printf("%d\n", clientSocket);
+            
             if (send(clientSocket, message, strlen(message), 0) < 0)
                 {
-                    printf("Send failed\n");
+                    perror("Send failed: ");
                 }
         }
         else if(action =="4"){
 
             strcpy(message,"SHUTDOWN");
+            cout<< "Enter which client you want to shutdown";
              if (scanf("%d", &request.receiver_id) != 1)
             {
                 printf("Invalid input. Please enter an integer.\n");
@@ -157,20 +159,23 @@ int main(int argc, char *argv[])
           
             request.message = message;
             strcpy(message, makeRequest(request).c_str());
-            printf("%d\n", clientSocket);
+           
             if (send(clientSocket, message, strlen(message), 0) < 0)
                 {
-                    printf("Send failed\n");
+                   perror("Send failed: ");
                 }
         }
          else if(action =="5"){
 
             strcpy(message,"ADD_PERMISSION");
+            cout << "which client do you want to add permission to";
+
              if (scanf("%d", &request.receiver_id) != 1)
             {
                 printf("Invalid input. Please enter an integer.\n");
                 return 1;
             }
+                        cout << "to which client";
             if (scanf("%d", &request.receiver_id_permission) != 1)
             {
                 printf("Invalid input. Please enter an integer.\n");
@@ -179,16 +184,17 @@ int main(int argc, char *argv[])
           
             request.message = message;
             strcpy(message, makeRequest(request).c_str());
-            printf("%d\n", clientSocket);
+            
             if (send(clientSocket, message, strlen(message), 0) < 0)
                 {
-                    printf("Send failed\n");
+                    perror("Send failed: ");
                 }
         }
         else{
             cout << "choose valid action\n";
             return 1;
         }
+        sleep(1);
 
     
         

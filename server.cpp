@@ -128,10 +128,10 @@ string showPermission(map<int, vector<int> > &clientPermissions, int client){
 }
 void *socketThread(void *arg)
 {
-    printf("New thread\n");
+    
     int newSocket = *((int *)arg);
     int n;
-    printf("socket: %d", newSocket);
+    
     int client_id;
     int receiver_id;
     for (;;)
@@ -140,8 +140,7 @@ void *socketThread(void *arg)
 
         if (n <= 0)
         {
-            // Client has disconnected or an error occurred
-            printf("error");
+           perror("Client disconnected");
             break;
         }
 
@@ -155,10 +154,10 @@ void *socketThread(void *arg)
         //na razei na wsztywno sprawdzm
         
      
-        if (hasPermission(permisssions,client_id,client_id))
-        {
-            printf("ma permission\n");
-        }
+        // if (hasPermission(permisssions,client_id,client_id))
+        // {
+        //     printf("ma permission\n");
+        // }
         if (request.message == "REGISTER")
         {   
             addPermission(permisssions,client_id,client_id);
@@ -195,7 +194,7 @@ void *socketThread(void *arg)
         }
         
         
-        printMap(clientSockets);
+        
 
         //to na dole odkomentowac jakby gora nie dzialala
         // if (hasPermission(permisssions,client_id,receiver_id))
@@ -277,7 +276,7 @@ void *socketThread(void *arg)
     pthread_mutex_unlock(&mutex_lock);
 
     close(newSocket);
-    printf("Exit socketThread\n");
+    // printf("Exit socketThread\n");
 
     pthread_exit(NULL);
 }
@@ -319,7 +318,7 @@ int main()
     {
         addr_size = sizeof serverStorage;
         newSocket = accept(serverSocket, (struct sockaddr *)&serverStorage, &addr_size);
-        printf("%d", newSocket);
+        // printf("%d", newSocket);
         // pthread_mutex_lock(&mutex_lock);
 
         // pthread_mutex_unlock(&mutex_lock);
