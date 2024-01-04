@@ -21,9 +21,9 @@ struct Request
 };
 string makeRequest(Request request)
 {
-    char message[2000];
-    strcpy(message, (to_string(request.client_id) + " " + request.message.c_str() + " " + to_string(request.receiver_id)+ " " + to_string(request.receiver_id_permission)).c_str());
-    return message;
+    char mess_request[1000];
+    strcpy(mess_request, (to_string(request.client_id) + " " + request.message.c_str() + " " + to_string(request.receiver_id)+ " " + to_string(request.receiver_id_permission)).c_str());
+    return mess_request;
 }
 
 void *serverThread(void *arg)
@@ -41,7 +41,7 @@ void *serverThread(void *arg)
         }
         
         // Print the received message
-        cout<< "Data received: " << buffer;
+        cout<< "Data received: " << buffer << "\n";
         memset(&buffer, 0, sizeof(buffer));
 
     }
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 {
 
     char message[1000];
-    char buffer[1024];
+    char buffer[1000];
     int clientSocket;
     int clientId = stoi(argv[1]);
     string action;
@@ -95,15 +95,15 @@ memset(&message, 0, sizeof(message));
     {
         perror("Send failed: ");
     }
-    memset(&message, 0, sizeof(message));
-    if (recv(clientSocket, message, strlen(message), 0) < 0)
-    {
-        perror("Receive failed");
-    }
-    cout << "Data received: %s\n"<< message << "koniec";
+    // memset(&message, 0, sizeof(message));
+    // if (recv(clientSocket,  message,strlen(message), 0) < 0)
+    // {
+    //     perror("Receive failed");
+    // }
+    // cout << "Data received:\n"<< buffer << "koniec";
 
-    memset(&message, 0, sizeof(message));
-    memset(&buffer, 0, sizeof(buffer));
+    // memset(&message, 0, sizeof(message));
+    // memset(&buffer, 0, sizeof(buffer));
   
     if (pthread_create(&serverThreadId, NULL, serverThread, (void *)&clientSocket) != 0)
     {
@@ -114,6 +114,7 @@ memset(&message, 0, sizeof(message));
     }
     for (;;)
     {
+        sleep(1);
         cout << "please enter action to do:\n "<<
         "1.exit 3. show clients \n "<<
         "4.shutdown 5.add permission\n";
@@ -194,7 +195,7 @@ memset(&message, 0, sizeof(message));
             cout << "choose valid action\n";
             return 1;
         }
-        sleep(1);
+        
 
     
         

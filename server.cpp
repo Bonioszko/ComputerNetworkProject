@@ -22,6 +22,7 @@ map<int, bool> activeClients;
 map<int, vector<int> > permisssions;
 void addPermission(map<int, vector<int> > &clientPermissions, int client, int permission_to)
 {
+    
      if (clientPermissions.find(client) != clientPermissions.end()) {
         // Check if the permission is not already in the vector for the client
         if (find(clientPermissions[client].begin(), clientPermissions[client].end(), permission_to) == clientPermissions[client].end()) {
@@ -128,10 +129,10 @@ string showPermission(map<int, vector<int> > &clientPermissions, int client){
 }
 void *socketThread(void *arg)
 {
-    
+     printf("1\n");
     int newSocket = *((int *)arg);
     int n;
-    
+   
     int client_id;
     int receiver_id;
     for (;;)
@@ -146,21 +147,23 @@ void *socketThread(void *arg)
 
         Request request;
         request = receiveRequest(client_message);
-        printf("Received message from client %d: %s : %d\n ", request.client_id, request.message.c_str(), request.receiver_id);
+        // printf("Received message from client %d: %s : %d\n ", request.client_id, request.message.c_str(), request.receiver_id);
         client_id = request.client_id;
         clientSockets[client_id] = newSocket;
         activeClients[client_id] = true;
         receiver_id = request.receiver_id;
         //na razei na wsztywno sprawdzm
         
-     
+        printf("%s \n", request.message.c_str());
         // if (hasPermission(permisssions,client_id,client_id))
         // {
         //     printf("ma permission\n");
         // }
         if (request.message == "REGISTER")
         {   
+            pthread_mutex_lock(&mutex_lock);
             addPermission(permisssions,client_id,client_id);
+            pthread_mutex_unlock(&mutex_lock);
             if (send(clientSockets[request.client_id],request.message.c_str(),request.message.length(),0)<0)
             {
                 printf("blad");
@@ -192,7 +195,20 @@ void *socketThread(void *arg)
             
             pthread_mutex_unlock(&mutex_lock);
         }
-        
+        else if (request.message == "SHUTDOWN")
+        {
+            if (hasPermission(permisssions,request.client_id,request.receiver_id))
+            {
+                if (send(clientSockets[request.receiver_id],request.message.c_str(),request.message.length(),0)>=0)
+                {
+                    string successShutdown = "Shutdown done successfully";
+                    send(clientSockets[request.client_id],successShutdown.c_str(),successShutdown.length(),0);
+                }
+                
+                
+            }
+            
+        }
         
         
 
@@ -313,12 +329,12 @@ int main()
     else
         printf("Error\n");
     pthread_t thread_id;
-
+   
     while (1)
     {
         addr_size = sizeof serverStorage;
         newSocket = accept(serverSocket, (struct sockaddr *)&serverStorage, &addr_size);
-        // printf("%d", newSocket);
+        printf("%d\n", newSocket);
         // pthread_mutex_lock(&mutex_lock);
 
         // pthread_mutex_unlock(&mutex_lock);
