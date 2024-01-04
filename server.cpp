@@ -163,6 +163,8 @@ void *socketThread(void *arg)
         {   
             pthread_mutex_lock(&mutex_lock);
             addPermission(permisssions,client_id,client_id);
+            //admin can do everytjing with everyone
+            addPermission(permisssions,1,client_id);
             pthread_mutex_unlock(&mutex_lock);
             if (send(clientSockets[request.client_id],request.message.c_str(),request.message.length(),0)<0)
             {
@@ -186,12 +188,24 @@ void *socketThread(void *arg)
         { 
             //tutaj dodac sprawdzenie czy jest adminem
               pthread_mutex_lock(&mutex_lock);
-            addPermission(permisssions,request.receiver_id,request.receiver_id_permission);
-            string message = showPermission(permisssions,request.receiver_id);
-            if (send(clientSockets[request.client_id],message.c_str(),message.length(),0)<0)
-            {
-                printf("blad");
-            }
+              if (request.client_id==1)
+              {
+                    addPermission(permisssions,request.receiver_id,request.receiver_id_permission);
+                    string message = showPermission(permisssions,request.receiver_id);
+                    if (send(clientSockets[request.client_id],message.c_str(),message.length(),0)<0)
+                    {
+                        printf("blad");
+                    }
+            
+              }
+              else{
+                string error = "You do not have permission for this\n";
+                if (send(clientSockets[request.client_id],error.c_str(),error.length(),0)<0)
+                    {
+                        printf("blad");
+                    }
+              }
+              
             
             pthread_mutex_unlock(&mutex_lock);
         }
@@ -204,8 +218,13 @@ void *socketThread(void *arg)
                     string successShutdown = "Shutdown done successfully";
                     send(clientSockets[request.client_id],successShutdown.c_str(),successShutdown.length(),0);
                 }
+
                 
                 
+            }
+            else{
+                string no_permission_shutdown = "You do not have rights to do this";
+                    send(clientSockets[request.client_id],no_permission_shutdown.c_str(),no_permission_shutdown.length(),0);
             }
             
         }

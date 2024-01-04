@@ -151,7 +151,7 @@ memset(&message, 0, sizeof(message));
         else if(action =="4"){
 
             strcpy(message,"SHUTDOWN");
-            cout<< "Enter which client you want to shutdown";
+            cout<< "Enter which client you want to shutdown: ";
              if (scanf("%d", &request.receiver_id) != 1)
             {
                 printf("Invalid input. Please enter an integer.\n");
@@ -169,14 +169,14 @@ memset(&message, 0, sizeof(message));
          else if(action =="5"){
 
             strcpy(message,"ADD_PERMISSION");
-            cout << "which client do you want to add permission to";
+            cout << "which client do you want to add permission to: ";
 
              if (scanf("%d", &request.receiver_id) != 1)
             {
                 printf("Invalid input. Please enter an integer.\n");
                 return 1;
             }
-                        cout << "to which client";
+                        cout << "to which client: ";
             if (scanf("%d", &request.receiver_id_permission) != 1)
             {
                 printf("Invalid input. Please enter an integer.\n");
