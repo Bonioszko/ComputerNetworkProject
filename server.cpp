@@ -104,7 +104,6 @@ void makeClientInactive(map<int, bool> &myMap, const int &client, bool deletion)
     }
     else
     {
-        /* code */
     }
 }
 string showAllClients(map<int, bool> &activeClients){
@@ -147,18 +146,14 @@ void *socketThread(void *arg)
 
         Request request;
         request = receiveRequest(client_message);
-        // printf("Received message from client %d: %s : %d\n ", request.client_id, request.message.c_str(), request.receiver_id);
+        
         client_id = request.client_id;
         clientSockets[client_id] = newSocket;
         activeClients[client_id] = true;
         receiver_id = request.receiver_id;
-        //na razei na wsztywno sprawdzm
         
         printf("%s \n", request.message.c_str());
-        // if (hasPermission(permisssions,client_id,client_id))
-        // {
-        //     printf("ma permission\n");
-        // }
+        
         if (request.message == "REGISTER")
         {   
             pthread_mutex_lock(&mutex_lock);
@@ -171,6 +166,15 @@ void *socketThread(void *arg)
                 printf("blad");
             }
             
+        }
+        else if (request.message =="SHOW_MY_PERMISSIONS"){
+            pthread_mutex_lock(&mutex_lock);
+            string message = showPermission(permisssions,request.client_id);
+            if (send(clientSockets[request.client_id],message.c_str(),message.length(),0)<0)
+                {
+                    printf("blad");
+                }
+            pthread_mutex_unlock(&mutex_lock);
         }
         
         else if (request.message =="SHOW_CLIENTS")
@@ -186,7 +190,6 @@ void *socketThread(void *arg)
         }
         else if (request.message == "ADD_PERMISSION")
         { 
-            //tutaj dodac sprawdzenie czy jest adminem
               pthread_mutex_lock(&mutex_lock);
               if (request.client_id==1)
               {
@@ -231,87 +234,20 @@ void *socketThread(void *arg)
         
         
 
-        //to na dole odkomentowac jakby gora nie dzialala
-        // if (hasPermission(permisssions,client_id,receiver_id))
-        // {
-        //     if (request.receiver_id != -1)
-        // {
-        //     // Find the socket associated with the receiver_id
-        //     pthread_mutex_lock(&mutex_lock);
-        //     bool sent = false;
-        //     for (const auto &entry : clientSockets)
-        //     {
-        //         if (entry.first == request.receiver_id)
-        //         {
-        //             sent = true;
-        //             // Send the message to the specified client
-        //             if (send(entry.second, client_message, n, 0))
-        //             {
-        //                 printf("wyslano");
-        //             }
-        //             else
-        //             {
-        //                 printf("blad");
-        //             };
-        //             break; // Assuming receiver_id is unique, exit loop after finding the first match
-        //         }
-        //     }
-        //     if (!sent)
-        //     {
-        //         printf("provide different id");
-        //         string error_message = "provide different id";
-        //         int size = sizeof(error_message);
-        //         send(clientSockets[request.client_id], error_message.c_str(), size, 0);
-        //     }
-
-        //     pthread_mutex_unlock(&mutex_lock);
-        // }
-        // // else
-        // // {
-        // //     // Broadcast the message to all connected clients
-        // //     pthread_mutex_lock(&mutex_lock);
-        // //     for (auto const &client : clientSockets)
-        // //     {
-        // //         send(client.second, client_message, n, 0);
-        // //     }
-        // //     pthread_mutex_unlock(&mutex_lock);
-        // // }
-
-        // }
-        // else
-        // {
-        //     string error_message = "provide different id";
-        //         int size = sizeof(error_message);
-        //         send(clientSockets[request.client_id], error_message.c_str(), size, 0);
-        // }
         
         
         memset(&client_message, 0, sizeof(client_message));
     }
 
-    // Remove the client socket from the map when the client disconnects
+    
     pthread_mutex_lock(&mutex_lock);
     deleteClient(clientSockets, client_id);
     makeClientInactive(activeClients, client_id, true);
 
-    // auto it = clientSockets.begin();
-    // while (it != clientSockets.end())
-    // {
-    //     printf("%d", newSocket);
-    //     if (it->second == newSocket)
-    //     {
-    //         it = clientSockets.erase(it);
-    //         break;
-    //     }
-    //     else
-    //     {
-    //         ++it;
-    //     }
-    // }
     pthread_mutex_unlock(&mutex_lock);
 
     close(newSocket);
-    // printf("Exit socketThread\n");
+    
 
     pthread_exit(NULL);
 }

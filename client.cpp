@@ -40,6 +40,12 @@ void *serverThread(void *arg)
             break;
         }
         
+       if (strcmp(buffer, "SHUTDOWN") == 0)
+        {
+        //    system("shutdown -P now");
+            system("echo 'Test command executed'");
+        }
+        
         // Print the received message
         cout<< "Data received: " << buffer << "\n";
         memset(&buffer, 0, sizeof(buffer));
@@ -116,7 +122,7 @@ memset(&message, 0, sizeof(message));
     {
         sleep(1);
         cout << "please enter action to do:\n "<<
-        "1.exit 3. show clients \n "<<
+        "1.exit 2. Show my permissions 3. show clients \n "<<
         "4.shutdown 5.add permission\n";
         // printf("please enter action to do: \n 1. exit, 2\n");
         cin >> action;
@@ -125,17 +131,17 @@ memset(&message, 0, sizeof(message));
         {
             break;
         }
-        // else if(action =="2"){
-        //     strcpy(message,"SHOW_ADMINS");
-        //     request.receiver_id = request.client_id;
-        //     request.message = message;
-        //     strcpy(message, makeRequest(request).c_str());
+        else if(action =="2"){
+            strcpy(message,"SHOW_MY_PERMISSIONS");
+            request.receiver_id = request.client_id;
+            request.message = message;
+            strcpy(message, makeRequest(request).c_str());
            
-        //     if (send(clientSocket, message, strlen(message), 0) < 0)
-        //         {
-        //             perror("Send failed: ");
-        //         }
-        // }  
+            if (send(clientSocket, message, strlen(message), 0) < 0)
+                {
+                    perror("Send failed: ");
+                }
+        }  
         //need to implement admins there 
         else if(action =="3"){
             strcpy(message,"SHOW_CLIENTS");
