@@ -19,24 +19,25 @@ struct Request
     int receiver_id;
     int receiver_id_permission;
 };
+
 string makeRequest(Request request)
 {
     char mess_request[1000];
     strcpy(mess_request, (to_string(request.client_id) + " " + request.message.c_str() + " " + to_string(request.receiver_id)+ " " + to_string(request.receiver_id_permission)).c_str());
     return mess_request;
 }
-
+bool server_on=false;
 void *serverThread(void *arg)
 {
     char buffer[1024];
     int clientSocket = *((int *)arg);
-
+    server_on=true;
     for (;;)
     {
         // Wait for server response
         if (recv(clientSocket, buffer, 1024, 0) <=0)
         {
-            cout << "Receive failed";
+            cout << "Receive failed\n";
             break;
         }
         
@@ -51,7 +52,10 @@ void *serverThread(void *arg)
         memset(&buffer, 0, sizeof(buffer));
 
     }
-   
+    server_on=false;
+    cout<< "server thread exit, click anything to close client\n";
+    cout << server_on;
+    
     pthread_exit(NULL);
 }
 int main(int argc, char *argv[])
@@ -72,7 +76,7 @@ int main(int argc, char *argv[])
     clientSocket = socket(PF_INET, SOCK_STREAM, 0);
     if (clientSocket == -1)
     {
-       
+       perror("Could not create socket");
         return 1;
     }
 
@@ -89,9 +93,12 @@ int main(int argc, char *argv[])
     
     // Connect the socket to the server using the address
     addr_size = sizeof serverAddr;
-    connect(clientSocket, (struct sockaddr *)&serverAddr, addr_size);
+    if (connect(clientSocket, (struct sockaddr *)&serverAddr, addr_size) < 0) {
+        perror("Connection failed");
+        return -1;
+    }
     // strcpy(message,"Hello");
-memset(&message, 0, sizeof(message));
+    memset(&message, 0, sizeof(message));
     int msg_scanf_size;
     request.message = "REGISTER";
     request.receiver_id = request.client_id;
@@ -101,16 +108,6 @@ memset(&message, 0, sizeof(message));
     {
         perror("Send failed: ");
     }
-    // memset(&message, 0, sizeof(message));
-    // if (recv(clientSocket,  message,strlen(message), 0) < 0)
-    // {
-    //     perror("Receive failed");
-    // }
-    // cout << "Data received:\n"<< buffer << "koniec";
-
-    // memset(&message, 0, sizeof(message));
-    // memset(&buffer, 0, sizeof(buffer));
-  
     if (pthread_create(&serverThreadId, NULL, serverThread, (void *)&clientSocket) != 0)
     {
         perror("pthread_create");
@@ -119,14 +116,21 @@ memset(&message, 0, sizeof(message));
         
     }
     for (;;)
-    {
+    {   
+        
+        
         sleep(1);
+        if (!server_on)
+        {
+            cout << "server is down\n"; 
+            break;
+        }
         cout << "please enter action to do:\n "<<
         "1.exit 2. Show my permissions 3. show clients \n "<<
         "4.shutdown 5.add permission\n";
-        // printf("please enter action to do: \n 1. exit, 2\n");
+   
         cin >> action;
-        // msg_scanf_size = scanf("%s", message);
+
         if (action =="1")
         {
             break;
@@ -199,7 +203,7 @@ memset(&message, 0, sizeof(message));
         }
         else{
             cout << "choose valid action\n";
-            return 1;
+            break;
         }
         
 
