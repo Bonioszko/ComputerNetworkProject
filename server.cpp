@@ -214,7 +214,6 @@ void *socketThread(void *arg)
         else if (request.message =="SHOW_CLIENTS")
         {
            
-        
            strcpy(client_message, showAllClients(activeClients).c_str());
            
             if (send(clientSockets[request.client_id],client_message,strlen(client_message),0)<0)
