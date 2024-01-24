@@ -4,8 +4,8 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <arpa/inet.h>
-#include <fcntl.h>  // for open
-#include <unistd.h> // for close
+
+#include <unistd.h> 
 #include <pthread.h>
 #include <iostream>
 #include <string>
@@ -82,11 +82,11 @@ void deleteClient(map<int, int> &myMap, const int &client)
     if (it != myMap.end())
     {
         myMap.erase(it);
-        printf("client deleted");
+        cout << "client deleted\n";
     }
     else
     {
-        printf("no client with that id");
+       cout << "no client with that id\n";
     }
     pthread_mutex_unlock(&mutex_lock);
 }
@@ -100,11 +100,11 @@ void makeClientInactive(map<int, bool> &myMap, const int &client, bool deletion)
         if (it != myMap.end())
         {
             myMap.erase(it);
-            printf("client deleted");
+            cout << "client deleted\n";
         }
         else
         {
-            printf("no client with that id");
+           cout << "no client with that id\n";
         }
     }
     else
@@ -112,14 +112,28 @@ void makeClientInactive(map<int, bool> &myMap, const int &client, bool deletion)
     }
     pthread_mutex_unlock(&mutex_lock);
 }
+// string showAllClients(map<int, bool> &activeClients){
+//     pthread_mutex_lock(&mutex_lock);
+//     stringstream keysStream;
+//     keysStream << "List of clients:\n";
+//     for (const auto& pair : activeClients) {
+//             keysStream << "Client: " << pair.first << ", ";
+//         }
+//         pthread_mutex_unlock(&mutex_lock);
+//     return keysStream.str();
+// }
 string showAllClients(map<int, bool> &activeClients){
     pthread_mutex_lock(&mutex_lock);
     stringstream keysStream;
-    keysStream << "List of clients:\n";
-    for (const auto& pair : activeClients) {
-            keysStream << "Client: " << pair.first << ", ";
+    keysStream << "[";
+    for (auto it = activeClients.begin(); it != activeClients.end(); ++it) {
+        keysStream << "Client" << it->first;
+        if (next(it) != activeClients.end()) {
+            keysStream << ", ";
         }
-        pthread_mutex_unlock(&mutex_lock);
+    }
+    keysStream << "]";
+    pthread_mutex_unlock(&mutex_lock);
     return keysStream.str();
 }
 string showPermission(map<int, vector<int> > &clientPermissions, int client){
@@ -140,7 +154,6 @@ string showPermission(map<int, vector<int> > &clientPermissions, int client){
             }
     
     }
-   
     permissionStream <<"]";
  
  
@@ -148,7 +161,7 @@ string showPermission(map<int, vector<int> > &clientPermissions, int client){
 }
 void *socketThread(void *arg)
 {
-     printf("1\n");
+   
     int newSocket = *((int *)arg);
     int n;
    
@@ -172,7 +185,7 @@ void *socketThread(void *arg)
         activeClients[client_id] = true;
         receiver_id = request.receiver_id;
         
-        printf("%s \n", request.message.c_str());
+        cout << request.message << "\n";
         
         if (request.message == "REGISTER")
         {   
@@ -183,7 +196,7 @@ void *socketThread(void *arg)
          
             if (send(clientSockets[request.client_id],request.message.c_str(),request.message.length(),0)<0)
             {
-                printf("blad");
+                perror("Send failed: ");
             }
             
         }
@@ -192,7 +205,7 @@ void *socketThread(void *arg)
             string message = showPermission(permisssions,request.client_id);
             if (send(clientSockets[request.client_id],message.c_str(),message.length(),0)<0)
                 {
-                    printf("blad");
+                    perror("Send failed: ");
                 }
           
         }
@@ -200,11 +213,12 @@ void *socketThread(void *arg)
         else if (request.message =="SHOW_CLIENTS")
         {
            
-
+        
            strcpy(client_message, showAllClients(activeClients).c_str());
+           cout <<client_message << "\n";
             if (send(clientSockets[request.client_id],client_message,strlen(client_message),0)<0)
             {
-                printf("send failed");
+                perror("Send failed: ");
             }
           
         }
@@ -217,7 +231,7 @@ void *socketThread(void *arg)
                     string message = showPermission(permisssions,request.receiver_id);
                     if (send(clientSockets[request.client_id],message.c_str(),message.length(),0)<0)
                     {
-                        printf("blad");
+                       perror("Send failed: ");
                     }
             
               }
@@ -225,12 +239,9 @@ void *socketThread(void *arg)
                 string error = "You do not have permission for this\n";
                 if (send(clientSockets[request.client_id],error.c_str(),error.length(),0)<0)
                     {
-                        printf("blad");
+                        perror("Send failed: ");
                     }
               }
-              
-            
-          
         }
         else if (request.message == "SHUTDOWN")
         {
@@ -238,16 +249,17 @@ void *socketThread(void *arg)
             {
                 if (send(clientSockets[request.receiver_id],request.message.c_str(),request.message.length(),0)>=0)
                 {
-                    string successShutdown = "Shutdown done successfully";
+                    string successShutdown = "Shutdown send successfully";
                     send(clientSockets[request.client_id],successShutdown.c_str(),successShutdown.length(),0);
                 }
-
-                
-                
+                else{
+                    string errorShutdown = "Shutdown send failed";
+                    send(clientSockets[request.client_id],errorShutdown.c_str(),errorShutdown.length(),0);
+                }
             }
             else{
                 string no_permission_shutdown = "You do not have rights to do this";
-                    send(clientSockets[request.client_id],no_permission_shutdown.c_str(),no_permission_shutdown.length(),0);
+                send(clientSockets[request.client_id],no_permission_shutdown.c_str(),no_permission_shutdown.length(),0);
             }
             
         }
@@ -266,8 +278,6 @@ void *socketThread(void *arg)
 
 
     close(newSocket);
-    
-
     pthread_exit(NULL);
 }
 
@@ -290,21 +300,22 @@ int main()
 
 
     if (listen(serverSocket, 50) == 0)
-        printf("Listening\n");
+        cout << "Listening\n";
     else
-        printf("Error\n");
+        perror("Error\n");
     pthread_t thread_id;
    
     while (1)
     {
         addr_size = sizeof serverStorage;
         newSocket = accept(serverSocket, (struct sockaddr *)&serverStorage, &addr_size);
-        printf("%d\n", newSocket);
+        cout << "new client connected\n";
 
         if (pthread_create(&thread_id, NULL, socketThread, &newSocket) != 0)
-            printf("Failed to create thread\n");
+            perror("pthread_create");
 
         pthread_detach(thread_id);
     }
+    close(serverSocket);
     return 0;
 }
