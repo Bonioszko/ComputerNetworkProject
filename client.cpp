@@ -43,9 +43,9 @@ void *serverThread(void *arg)
        if (strcmp(buffer, "SHUTDOWN") == 0)
         {
         //    system("shutdown -h now");
-            // system("echo 'Test command executed\n'");
-            // system("ls");
-            cout <<"shutdown";
+            system("echo 'Test command executed\n'");
+         
+           
         }
     cout<< "Data received: " << buffer << "\n";
         memset(&buffer, 0, sizeof(buffer));
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
     pthread_detach(serverThreadId);
     for (;;)
     {   
-        cout<<"eo";
+     
         sleep(1);
         if (!server_on)
         {

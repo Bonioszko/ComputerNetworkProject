@@ -43,6 +43,7 @@ bool hasPermission(const map<int, vector<int> > &clientPermissions, int client, 
         const vector<int> &permissions = clientIterator->second;
         for (int permission : permissions) {
             if (permission == permission_to) {
+                pthread_mutex_unlock(&mutex_lock);
                 return true;  
             }
         }
@@ -215,7 +216,7 @@ void *socketThread(void *arg)
            
         
            strcpy(client_message, showAllClients(activeClients).c_str());
-           cout <<client_message << "\n";
+           
             if (send(clientSockets[request.client_id],client_message,strlen(client_message),0)<0)
             {
                 perror("Send failed: ");
